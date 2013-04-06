@@ -9,7 +9,7 @@ module RSpec::Puppet
       code = pre_cond + test_manifest(type)
       node_name = nodename(type)
 
-      catalogue = build_catalog(node_name, facts_hash(node_name), code)
+      catalogue = build_catalog(node_name, facts_for_node(node_name), code)
       FileUtils.rm_rf(vardir) if File.directory?(vardir)
       catalogue
     end
@@ -53,19 +53,23 @@ module RSpec::Puppet
       end
     end
 
-    def facts_hash(node)
-      facts_val = {
+    def facts_for_node(node)
+      base_facts(node).tap do |h|
+        h.merge(munge_facts(default_facts)) if default_facts
+        h.merge(munge_facts(facts)) if self.respond_to? :facts
+      end
+    end
+
+    def default_facts
+      @default_facts ||= RSpec.configuration.default_facts
+    end
+
+    def base_facts(node)
+      {
         'hostname' => node.split('.').first,
         'fqdn'     => node,
         'domain'   => node.split('.').last,
       }
-
-      if RSpec.configuration.default_facts.any?
-        facts_val.merge!(munge_facts(RSpec.configuration.default_facts))
-      end
-
-      facts_val.merge!(munge_facts(facts)) if self.respond_to?(:facts)
-      facts_val
     end
 
     def param_str

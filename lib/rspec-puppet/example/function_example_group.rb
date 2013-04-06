@@ -11,13 +11,11 @@ module RSpec::Puppet
 
       node_name = nodename(:function)
 
-      facts_val = facts_hash(node_name)
-
       # if we specify a pre_condition, we should ensure that we compile that code
       # into a catalog that is accessible from the scope where the function is called
       Puppet[:code] = pre_cond
 
-      compiler = build_compiler(node_name, facts_val)
+      compiler = build_compiler(node_name, facts_for_node(node_name))
 
       function_scope = scope(compiler, node_name)
 
